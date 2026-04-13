@@ -72,6 +72,6 @@ layers: application, container infrastructure, and cloud configuration.
 
 ## Security documents
 
-- [Threat Model](docs/threat-model.md)
-- [Security Testing](docs/security-testing.md)
-- [Gaps Analysis](docs/gaps-analysis.md)
+- [Threat Model](/threat-model.md)
+- [Security Testing](/security-testing.md)
+- [Gaps Analysis](/gaps-analysis.md)
