@@ -58,17 +58,6 @@ layers: application, container infrastructure, and cloud configuration.
 - Main app: http://localhost
 - Grafana dashboard: http://localhost:3000 (admin/admin default)
 
-## Intentional vulnerabilities (documented for course purposes)
-
-| Vulnerability | Location | Purpose |
-|---|---|---|
-| No rate limiting on login | /api/auth/login | Enables brute force simulation |
-| Sequential file IDs | Database | Enables IDOR attack demo |
-| JWT tokens never revoked server-side | Auth system | Stolen token reuse scenario |
-| App container runs as root | Dockerfile | Container privilege misconfiguration |
-| AWS credentials in .env | Configuration | Secrets management failure |
-| S3 bucket publicly readable | AWS | Cloud misconfiguration demo |
-| IAM role has s3:* permissions | AWS IAM | Overprivileged access demo |
 
 ## Security documents
 
