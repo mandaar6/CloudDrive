@@ -1,0 +1,15 @@
+apiVersion: 1
+
+providers:
+  - name: clouddrive
+    orgId: 1
+    folder: CloudDrive
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+
+# clouddrive/dashboard/dashboards.yml
+# this file is created after perplexity use

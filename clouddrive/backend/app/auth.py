@@ -3,6 +3,12 @@ import logging
 from datetime import datetime, timezone
 from functools import wraps
 
+# new imports
+import time
+from flask import request
+from .logging_utils import log_event
+
+
 from flask import Blueprint, request, jsonify, make_response, current_app
 
 from . import db, bcrypt
@@ -97,8 +103,10 @@ def login():
     # VULN: No rate limiting on this endpoint.
     # An attacker can brute-force credentials with unlimited attempts.
     # Fix: add Flask-Limiter or a reverse-proxy rate-limit rule.
+    start = time.time()
+
     data = request.get_json(silent=True) or {}
-    email    = (data.get("email") or "").strip().lower()
+    email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
 
     user = User.query.filter_by(email=email).first()
@@ -113,14 +121,38 @@ def login():
 
     if not valid:
         logger.warning("Failed login attempt for email: %s", email)
+
+        log_event(
+            "login_failure",
+            level="warning",
+            endpoint=request.path,
+            http_status=401,
+            ip=request.remote_addr,
+            email=email
+        )
+
         return jsonify({"error": "Invalid credentials"}), 401
 
     logger.info("User logged in: %s (id=%d)", email, user.id)
 
-    token    = _make_token(user.id)
-    response = make_response(jsonify({"message": "logged in", "user": user.to_dict()}))
+    log_event(
+        "login_success",
+        endpoint=request.path,
+        http_status=200,
+        ip=request.remote_addr,
+        user_id=user.id,
+        email=email,
+        latency_ms=int((time.time() - start) * 1000)
+    )
+
+    token = _make_token(user.id)
+    response = make_response(jsonify({
+        "message": "logged in",
+        "user": user.to_dict()
+    }))
     response.set_cookie(
-        "access_token", token,
+        "access_token",
+        token,
         httponly=True,
         samesite="Lax",
         max_age=int(current_app.config["JWT_EXPIRY"].total_seconds()),
