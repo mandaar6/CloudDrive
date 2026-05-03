@@ -1,0 +1,112 @@
+name: CloudDrive CI
+
+on:
+  push:
+    branches: ["*"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: clouddrive/backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pytest pytest-cov
+
+      - name: Run functional tests
+        run: pytest tests/test_functional.py -v --tb=short
+
+      - name: Run security tests
+        run: pytest tests/test_security.py -v --tb=short
+
+  sast:
+    name: Static Analysis (Semgrep)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        run: |
+          pip install semgrep
+          semgrep --config=p/owasp-top-ten \
+                  clouddrive/backend/ \
+                  --json \
+                  --output semgrep-results.json || true
+          cat semgrep-results.json | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)
+          r=d.get('results',[])
+          print(f'Semgrep findings: {len(r)}')
+          for f in r:
+            print(f'  [{f[\"extra\"][\"severity\"]}] {f[\"check_id\"]}')
+            print(f'    {f[\"path\"]}:{f[\"start\"][\"line\"]}')
+          " 2>/dev/null || true
+
+      - name: Upload Semgrep results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-results
+          path: semgrep-results.json
+
+  dependency-scan:
+    name: Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit -r clouddrive/backend/requirements.txt \
+            --format json \
+            --output pip-audit-results.json || true
+          pip-audit -r clouddrive/backend/requirements.txt || true
+
+      - name: Upload pip-audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-results
+          path: pip-audit-results.json
+
+  container-scan:
+    name: Container Vulnerability Scan (Trivy)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t clouddrive-backend clouddrive/backend/
+
+      - name: Run Trivy scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: clouddrive-backend
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: "0"
