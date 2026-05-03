@@ -1,0 +1,255 @@
+name: CloudDrive CI/CD
+
+# HW5: Basic automated CI/CD pipeline.
+#
+# Triggers:
+#   - push to any branch        -> CI (lint + tests + scans)
+#   - pull request to main      -> CI (lint + tests + scans)
+#   - push to main              -> CI + CD (build + publish image to GHCR)
+#   - manual workflow_dispatch  -> CI + CD (for ad-hoc deploy dry-runs)
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+# Cancel in-progress runs for the same ref when a new commit is pushed.
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write   # needed for the deploy job to push images to GHCR
+
+env:
+  PYTHON_VERSION: "3.11"
+  WORKDIR: clouddrive/backend
+  IMAGE_NAME: ${{ github.repository }}-backend
+
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Stage 1: Lint - cheap, fast, runs first to fail early on style problems.
+  # Findings are advisory (|| true) since the codebase isn't currently styled
+  # with these tools - flipping to blocking is in cicd-gaps.md.
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint (ruff + black --check)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install lint tools
+        run: pip install ruff==0.6.9 black==24.10.0
+
+      - name: ruff (advisory)
+        run: ruff check ${{ env.WORKDIR }} || true
+
+      - name: black --check (advisory)
+        run: black --check ${{ env.WORKDIR }} || true
+
+  # ---------------------------------------------------------------------------
+  # Stage 2: Unit + integration tests across a Python version matrix.
+  # This is the rubric's "automated unit tests in CI/CD" deliverable.
+  # ---------------------------------------------------------------------------
+  test:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: ${{ env.WORKDIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+
+      - name: Install runtime + test dependencies
+        run: pip install -r requirements.txt pytest pytest-cov
+
+      - name: Run full test suite with coverage
+        env:
+          TESTING: "true"
+          FLASK_ENV: testing
+        run: |
+          pytest -v --tb=short \
+                 --cov=app \
+                 --cov-report=term-missing \
+                 --cov-report=xml:coverage.xml \
+                 --junitxml=pytest-report.xml
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python }}
+          path: ${{ env.WORKDIR }}/coverage.xml
+
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.python }}
+          path: ${{ env.WORKDIR }}/pytest-report.xml
+  
+  
+  # ---------------------------------------------------------------------------
+  # Stage 3: Security scans - run in parallel with tests but block deploy.
+  # All three are advisory today (exit-code: "0" or "|| true"); flipping them
+  # to blocking is documented as a gap in cicd-gaps.md.
+  # ---------------------------------------------------------------------------
+  sast:
+    name: SAST (Semgrep OWASP Top 10)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Run Semgrep
+        run: |
+          pip install semgrep
+          semgrep --config=p/owasp-top-ten \
+                  ${{ env.WORKDIR }}/ \
+                  --json \
+                  --output semgrep-results.json || true
+          python3 -c "
+          import json
+          d=json.load(open('semgrep-results.json'))
+          r=d.get('results',[])
+          print(f'Semgrep findings: {len(r)}')
+          for f in r:
+              print(f'  [{f[\"extra\"][\"severity\"]}] {f[\"check_id\"]}')
+              print(f'    {f[\"path\"]}:{f[\"start\"][\"line\"]}')
+          "
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: semgrep-results
+          path: semgrep-results.json
+
+  dependency-scan:
+    name: SCA (pip-audit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Run pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit -r ${{ env.WORKDIR }}/requirements.txt \
+                    --format json \
+                    --output pip-audit-results.json || true
+          pip-audit -r ${{ env.WORKDIR }}/requirements.txt || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pip-audit-results
+          path: pip-audit-results.json
+
+  container-scan:
+    name: Container scan (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t clouddrive-backend ${{ env.WORKDIR }}/
+
+      - name: Run Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: clouddrive-backend
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: "0"
+
+  
+  # ---------------------------------------------------------------------------
+  # Stage 4 (CD): Build and publish the Docker image to GitHub Container
+  # Registry. Runs only on main and only after every prior stage passes.
+  # This is the "deploy" stage of CI/CD - actually rolling the image into
+  # a runtime environment is documented as a gap in cicd-gaps.md.
+  # ---------------------------------------------------------------------------
+  publish-image:
+    name: Build + publish image (CD)
+    runs-on: ubuntu-latest
+    needs: [test, sast, dependency-scan, container-scan]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: tags
+        run: |
+          REPO_LC=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "image=ghcr.io/${REPO_LC}-backend" >> "$GITHUB_OUTPUT"
+          echo "sha=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ env.WORKDIR }}
+          push: true
+          tags: |
+            ${{ steps.tags.outputs.image }}:latest
+            ${{ steps.tags.outputs.image }}:${{ steps.tags.outputs.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ---------------------------------------------------------------------------
+  # Stage 5 (CD, simulated): Deploy. Real environments are out of scope for
+  # HW5, so this job documents the contract and exits cleanly. Replace the
+  # "echo" steps with actual deployment commands (kubectl, terraform apply,
+  # AWS ECS update-service, etc.) once a target environment is provisioned.
+  # See cicd-gaps.md for the full list.
+  # ---------------------------------------------------------------------------
+  deploy-staging:
+    name: Deploy to staging (simulated)
+    runs-on: ubuntu-latest
+    needs: publish-image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: staging
+      url: https://staging.example.invalid
+    steps:
+      - name: Announce deploy target
+        run: |
+          echo "Would deploy ghcr.io/${{ github.repository }}-backend:${GITHUB_SHA::7}"
+          echo "Target: staging cluster (placeholder)"
+          echo "See cicd-gaps.md for the gap analysis on full CD."

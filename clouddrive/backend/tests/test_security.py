@@ -8,21 +8,29 @@ class TestRateLimiting:
         """Login endpoint enforces rate limiting after repeated failures.
         TEST-SEC-001: Maps to THREAT-001 (Brute Force).
         """
+        from app import limiter
         app.config["RATELIMIT_ENABLED"] = True
         responses = []
-        for i in range(7):
-            resp = client.post("/api/auth/login", json={
-                "email": "victim@example.com",
-                "password": "wrongpassword"
-            })
-            responses.append(resp.status_code)
+        try:
+            for i in range(7):
+                resp = client.post("/api/auth/login", json={
+                    "email": "victim@example.com",
+                    "password": "wrongpassword",
+                })
+                responses.append(resp.status_code)
 
-        app.config["RATELIMIT_ENABLED"] = False
-        assert 429 in responses, (
-            "Rate limiter did not return HTTP 429 after repeated login failures. "
-            "THREAT-001 mitigation is not functioning."
-        )
-
+            assert 429 in responses, (
+                "Rate limiter did not return HTTP 429 after repeated login failures. "
+                "THREAT-001 mitigation is not functioning."
+            )
+        finally:
+            # Always disable + reset, even if the assertion above fails,
+            # so later tests that use the auth_client fixture can log in.
+            app.config["RATELIMIT_ENABLED"] = False
+            try:
+                limiter.reset()
+            except Exception:
+                pass
 
 class TestIDOR:
     def test_unauthenticated_cannot_access_files(self, client):
@@ -58,9 +66,10 @@ class TestJWTSecurity:
         """Requests with a forged or invalid JWT are rejected.
         TEST-SEC-003: Maps to THREAT-003 (JWT reuse).
         """
-        resp = client.get("/api/files", headers={
+        resp = client.get("/api/files/", headers={
             "Cookie": "access_token=forged.invalid.token"
-        })
+        }, follow_redirects=True)
+
         assert resp.status_code == 401, (
             "Backend accepted a forged JWT token. "
             "THREAT-003 mitigation may not be functioning."
@@ -78,9 +87,9 @@ class TestJWTSecurity:
         fake_sig = "invalidsignature"
         forged_token = f"{header}.{payload}.{fake_sig}"
 
-        resp = client.get("/api/files", headers={
+        resp = client.get("/api/files/", headers={
             "Cookie": f"access_token={forged_token}"
-        })
+        }, follow_redirects=True)
         assert resp.status_code == 401
 
 
