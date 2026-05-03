@@ -41,20 +41,32 @@ def client(app):
 
 @pytest.fixture
 def auth_client(client, app):
+    """Authenticated test client.
+
+    Idempotent: only inserts the test user if it does not already exist,
+    so multiple tests in the same session can reuse this fixture without
+    triggering a UNIQUE-constraint failure on the email column.
+    """
     with app.app_context():
         from app import bcrypt
-        user = User(
-            email="testuser@example.com",
-            password_hash=bcrypt.generate_password_hash(
-                "TestPass123!"
-            ).decode("utf-8"),
-            is_verified=True
-        )
-        _db.session.add(user)
-        _db.session.commit()
+        existing = User.query.filter_by(email="testuser@example.com").first()
+        if existing is None:
+            user = User(
+                email="testuser@example.com",
+                password_hash=bcrypt.generate_password_hash(
+                    "TestPass123!"
+                ).decode("utf-8"),
+                is_verified=True,
+            )
+            _db.session.add(user)
+            _db.session.commit()
 
     resp = client.post("/api/auth/login", json={
         "email": "testuser@example.com",
-        "password": "TestPass123!"
+        "password": "TestPass123!",
     })
+    assert resp.status_code in (200, 201), (
+        f"auth_client login failed: {resp.status_code} "
+        f"{resp.get_data(as_text=True)}"
+    )
     return client
