@@ -36,9 +36,9 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        working-directory: clouddrive/backend
-        run: pip install -r requirements.txt
+        working-directory: backend
+        run: pip install -r requirements.txt pytest pytest-cov
 
       - name: Run tests
-        working-directory: clouddrive/backend
+        working-directory: backend
         run: python -m pytest tests/ -v --tb=long
