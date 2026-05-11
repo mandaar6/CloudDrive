@@ -128,6 +128,9 @@ def login():
     email    = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
 
+    if not email or not password:
+        return jsonify({"error": "email and password are required"}), 400
+
     user = User.query.filter_by(email=email).first()
 
     # Use a constant-time check to prevent user-enumeration via timing

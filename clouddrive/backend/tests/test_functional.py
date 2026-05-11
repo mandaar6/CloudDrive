@@ -77,3 +77,35 @@ class TestFiles:
         """GET /api/files/trash returns 401 without authentication."""
         resp = client.get("/api/files/trash")
         assert resp.status_code == 401
+
+
+class TestHealthAndEdgeCases:
+    def test_login_wrong_password_returns_401(self, client):
+        """Login with a correct email but wrong password returns 401."""
+        resp = client.post("/api/auth/login", json={
+            "email": "wrongpass@edgecase.test",
+            "password": "WrongPassword999!"
+        })
+        assert resp.status_code == 401
+
+    def test_login_missing_fields_returns_400(self, client):
+        """Login with an empty JSON body returns 400."""
+        resp = client.post("/api/auth/login", json={})
+        assert resp.status_code in (400, 422)
+
+    def test_register_missing_password_returns_400(self, client):
+        """Registration with only an email field and no password returns 400."""
+        resp = client.post("/api/auth/register", json={
+            "email": "nopassword@edgecase.test"
+        })
+        assert resp.status_code in (400, 422)
+
+    def test_shares_endpoint_requires_auth(self, client):
+        """GET /api/shares/outgoing returns 401 without authentication."""
+        resp = client.get("/api/shares/outgoing")
+        assert resp.status_code == 401
+
+    def test_folders_endpoint_requires_auth(self, client):
+        """GET /api/folders/ returns 401 without authentication."""
+        resp = client.get("/api/folders/")
+        assert resp.status_code == 401
