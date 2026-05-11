@@ -110,6 +110,9 @@ def get_upload_url():
 @files_bp.route("/confirm-upload", methods=["POST"])
 @login_required
 def confirm_upload():
+    logger.info("confirm_upload_received user=%s filename=%s",
+                request.current_user.id,
+                request.json.get("filename", "unknown") if request.json else "unknown")
     data         = request.get_json(silent=True) or {}
     filename     = (data.get("filename") or "").strip()
     s3_key       = (data.get("s3_key") or "").strip()
