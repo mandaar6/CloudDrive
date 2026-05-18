@@ -112,9 +112,9 @@ def register():
             ),
         )
         mail.send(msg)
-        logger.info("Verification email sent to: %s", email)
+        logger.info("email_send_success type=verification")
     except Exception as exc:
-        logger.error("Failed to send verification email to %s: %s", email, exc)
+        logger.error("email_send_failure type=%s error=%s", "verification", type(exc).__name__)
 
     return jsonify({
         "message": "Account created. Please check your email to verify your account."
@@ -245,9 +245,9 @@ def forgot_password():
             ),
         )
         mail.send(msg)
-        logger.info("Password reset email sent to: %s", email)
+        logger.info("email_send_success type=password_reset")
     except Exception as exc:
-        logger.error("Failed to send password reset email to %s: %s", email, exc)
+        logger.error("email_send_failure type=%s error=%s", "password_reset", type(exc).__name__)
 
     return jsonify(_success), 200
 
