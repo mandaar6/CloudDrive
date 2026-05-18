@@ -1,5 +1,7 @@
 {
-  "annotations": { "list": [] },
+  "annotations": {
+    "list": []
+  },
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
@@ -7,137 +9,206 @@
   "panels": [
     {
       "id": 1,
-      "title": "Backend Logs",
-      "type": "logs",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 0 },
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": false
+      "title": "System Health",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
       },
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "{container=\"clouddrive-backend-1\"}",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ]
+      "panels": []
     },
     {
       "id": 2,
-      "title": "Login Activity Over Time",
-      "type": "timeseries",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "title": "Total API Requests",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 1
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "showPoints": "auto",
-            "spanNulls": false
+          "displayName": "Requests (5m)",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 200
+              }
+            ]
           }
         },
         "overrides": []
       },
       "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
       },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_success\" [5m]))",
-          "legendFormat": "Successful Logins",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" [1h]))",
           "queryType": "range",
           "refId": "A"
-        },
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_failure\" [5m]))",
-          "legendFormat": "Failed Logins",
-          "queryType": "range",
-          "refId": "B"
         }
       ]
     },
     {
       "id": 3,
-      "title": "File Operations Over Time",
-      "type": "timeseries",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "title": "Avg Response Time (ms)",
+      "type": "gauge",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 1
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "showPoints": "auto",
-            "spanNulls": false
+          "displayName": "Avg Response Time",
+          "unit": "ms",
+          "min": 0,
+          "max": 2000,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 500
+              },
+              {
+                "color": "red",
+                "value": 1000
+              }
+            ]
           }
         },
         "overrides": []
       },
       "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "orientation": "auto",
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_success\" [5m]))",
-          "legendFormat": "Uploads",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "avg_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" | regexp \"duration_ms=(?P<duration>[0-9]+)\" | unwrap duration [2m])",
           "queryType": "range",
           "refId": "A"
-        },
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"download_success\" [5m]))",
-          "legendFormat": "Downloads",
-          "queryType": "range",
-          "refId": "B"
         }
       ]
     },
     {
       "id": 4,
-      "title": "Login Success",
-      "type": "stat",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 14 },
+      "title": "Login Response Time (ms)",
+      "type": "gauge",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 1
+      },
       "fieldConfig": {
         "defaults": {
-          "displayName": "Successful Logins (1h)",
-          "color": { "mode": "fixed", "fixedColor": "green" }
+          "displayName": "Login Avg ms",
+          "unit": "ms",
+          "min": 0,
+          "max": 2000,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 700
+              },
+              {
+                "color": "red",
+                "value": 1200
+              }
+            ]
+          }
         },
         "overrides": []
       },
       "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "value_and_name",
-        "text": { "titleSize": 14 }
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
       },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"login_success\" [1h])",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "avg_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" |= \"/api/auth/login\" | regexp \"duration_ms=(?P<duration>[0-9]+)\" | unwrap duration [2m])",
           "queryType": "range",
           "refId": "A"
         }
@@ -145,37 +216,57 @@
     },
     {
       "id": 5,
-      "title": "Login Failures",
+      "title": "Active Session Check",
       "type": "stat",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 14 },
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 1
+      },
       "fieldConfig": {
         "defaults": {
-          "displayName": "Failed Logins (1h)",
-          "color": { "mode": "thresholds" },
+          "displayName": "Successful Logins (1h)",
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "yellow", "value": 3 },
-              { "color": "red", "value": 10 }
+              {
+                "color": "blue",
+                "value": null
+              }
             ]
           }
         },
         "overrides": []
       },
       "options": {
+        "graphMode": "area",
         "colorMode": "background",
-        "graphMode": "none",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"login_failure\" [1h])",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_success\" [1h]))",
           "queryType": "range",
           "refId": "A"
         }
@@ -183,29 +274,61 @@
     },
     {
       "id": 6,
-      "title": "File Uploads",
+      "title": "Error Rate",
       "type": "stat",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 14 },
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 16,
+        "y": 1
+      },
       "fieldConfig": {
         "defaults": {
-          "displayName": "File Uploads (1h)",
-          "color": { "mode": "fixed", "fixedColor": "blue" }
+          "displayName": "Errors (1h)",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
         },
         "overrides": []
       },
       "options": {
-        "colorMode": "background",
         "graphMode": "none",
+        "colorMode": "background",
         "justifyMode": "auto",
         "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
         "textMode": "auto"
       },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_success\" [1h])",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"ERROR\" [1h]))",
           "queryType": "range",
           "refId": "A"
         }
@@ -213,86 +336,135 @@
     },
     {
       "id": 7,
-      "title": "Errors",
-      "type": "stat",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 14 },
+      "title": "System Activity Over Time",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
       "fieldConfig": {
         "defaults": {
-          "displayName": "Errors (1h)",
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
-            ]
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "showPoints": "auto",
+            "spanNulls": false
           }
         },
         "overrides": []
       },
       "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "interval": "1m"
       },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"ERROR\" [1h])",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" [2m]))",
+          "legendFormat": "Total Requests",
           "queryType": "range",
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" |= \"status=2\" [2m]))",
+          "legendFormat": "Successful (2xx)",
+          "queryType": "range",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" |~ \"status=(4|5)\" [2m]))",
+          "legendFormat": "Errors (4xx/5xx)",
+          "queryType": "range",
+          "refId": "C"
         }
       ]
     },
     {
       "id": 8,
-      "title": "Auth Events",
-      "type": "logs",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 18 },
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
+      "title": "User and File Activity",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 13
       },
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "{container=\"clouddrive-backend-1\"} |= \"login\"",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ]
+      "panels": []
     },
     {
       "id": 9,
-      "title": "File Events",
-      "type": "logs",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 18 },
+      "title": "Login Success",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Logins OK (1h)",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "green"
+          }
+        },
+        "overrides": []
+      },
       "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": true
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
       },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "{container=\"clouddrive-backend-1\"} |~ \"upload|download|delete\"",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_success\" [1h]))",
           "queryType": "range",
           "refId": "A"
         }
@@ -300,79 +472,115 @@
     },
     {
       "id": 10,
-      "title": "Upload Attempts vs Completions",
-      "type": "timeseries",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 26 },
-      "description": "Shows successful upload completions over time. \nA gap here while users are logged in indicates silent upload failure (RISK-001)",
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "showPoints": "auto",
-            "spanNulls": false
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_success\" [5m])",
-          "legendFormat": "Upload Completions",
-          "queryType": "range",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"confirm-upload\" [5m])",
-          "legendFormat": "Confirm Upload Calls",
-          "queryType": "range",
-          "refId": "B"
-        }
-      ]
-    },
-    {
-      "id": 11,
-      "title": "Email Send Failures",
+      "title": "Login Failures",
       "type": "stat",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 4, "w": 8, "x": 0, "y": 32 },
-      "description": "Any email failure should be investigated immediately",
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 4,
+        "y": 14
       },
       "fieldConfig": {
         "defaults": {
-          "displayName": "Email Failures (1h)",
-          "color": { "mode": "thresholds" },
+          "displayName": "Login Failures (1h)",
+          "color": {
+            "mode": "thresholds"
+          },
           "thresholds": {
             "mode": "absolute",
             "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 3
+              },
+              {
+                "color": "red",
+                "value": 10
+              }
             ]
           }
         },
         "overrides": []
       },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"email_send_failure\" [1h])",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_failure\" [1h]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "title": "File Uploads",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 8,
+        "y": 14
+      },
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Uploads (1h)",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "blue"
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_success\" [1h]))",
           "queryType": "range",
           "refId": "A"
         }
@@ -380,36 +588,49 @@
     },
     {
       "id": 12,
-      "title": "Database Errors",
+      "title": "Upload URL Requests",
       "type": "stat",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 4, "w": 8, "x": 8, "y": 32 },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 12,
+        "y": 14
       },
       "fieldConfig": {
         "defaults": {
-          "displayName": "DB Fatal Errors (1h)",
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
-            ]
+          "displayName": "Upload Attempts (1h)",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "purple"
           }
         },
         "overrides": []
       },
+      "options": {
+        "graphMode": "area",
+        "colorMode": "background",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-db-1\"} |= \"FATAL\" [1h])",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_url_requested\" [1h]))",
           "queryType": "range",
           "refId": "A"
         }
@@ -417,80 +638,26 @@
     },
     {
       "id": 13,
-      "title": "S3 Errors",
-      "type": "stat",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 4, "w": 8, "x": 16, "y": 32 },
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
-        "textMode": "auto"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "displayName": "S3 Errors (1h)",
-          "color": { "mode": "thresholds" },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              { "color": "green", "value": null },
-              { "color": "red", "value": 1 }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"s3_error\" [1h])",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 15,
-      "title": "Database Container Logs",
-      "type": "logs",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 36 },
-      "description": "PostgreSQL logs - look for FATAL or ERROR entries during incidents",
-      "options": {
-        "dedupStrategy": "none",
-        "enableLogDetails": true,
-        "prettifyLogMessage": false,
-        "showCommonLabels": false,
-        "showLabels": false,
-        "showTime": true,
-        "sortOrder": "Descending",
-        "wrapLogMessage": false
-      },
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "{container=\"clouddrive-db-1\"}",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 16,
-      "title": "Total API Requests Over Time",
+      "title": "Login Activity Over Time",
       "type": "timeseries",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 6, "w": 24, "x": 0, "y": 42 },
-      "description": "Total backend activity per 5 minutes. A drop to zero means the app is not responding.",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 0,
+        "y": 18
+      },
       "fieldConfig": {
         "defaults": {
-          "color": { "mode": "palette-classic" },
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 15,
             "drawStyle": "line",
             "lineInterpolation": "linear",
             "showPoints": "auto",
@@ -500,109 +667,640 @@
         "overrides": []
       },
       "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "interval": "1m"
       },
       "targets": [
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} [5m])",
-          "legendFormat": "Total Log Lines (Activity)",
-          "queryType": "range",
-          "refId": "A"
-        }
-      ]
-    },
-    {
-      "id": 17,
-      "title": "Registrations vs Email Verifications",
-      "type": "timeseries",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 48 },
-      "description": "If registrations occur but verifications do not follow, email sending is broken (RISK-004)",
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "showPoints": "auto",
-            "spanNulls": false
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"New user registered\" [1h])",
-          "legendFormat": "New Registrations",
-          "queryType": "range",
-          "refId": "A"
-        },
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"Email verified\" [1h])",
-          "legendFormat": "Email Verifications Completed",
-          "queryType": "range",
-          "refId": "B"
-        }
-      ]
-    },
-    {
-      "id": 18,
-      "title": "Login Success vs Login Failure Over Time",
-      "type": "timeseries",
-      "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 48 },
-      "description": "Failed logins consistently above zero with zero successes indicates login is broken (RISK-002)",
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "showPoints": "auto",
-            "spanNulls": false
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "list", "placement": "bottom" }
-      },
-      "targets": [
-        {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"login_success\" [5m])",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_success\" [2m]))",
           "legendFormat": "Successful Logins",
           "queryType": "range",
           "refId": "A"
         },
         {
-          "datasource": { "type": "loki", "uid": "P8E80F9AEF21F6940" },
-          "expr": "count_over_time({container=\"clouddrive-backend-1\"} |= \"login_failure\" [5m])",
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_failure\" [2m]))",
           "legendFormat": "Failed Logins",
           "queryType": "range",
           "refId": "B"
         }
       ]
+    },
+    {
+      "id": 14,
+      "title": "Upload Funnel Over Time",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 12,
+        "x": 12,
+        "y": 18
+      },
+      "description": "All three lines should overlap. A gap means uploads are failing silently (RISK-001).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "interval": "1m"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_url_requested\" [2m]))",
+          "legendFormat": "Upload Requested",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"confirm_upload_received\" [2m]))",
+          "legendFormat": "Confirm Received",
+          "queryType": "range",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_success\" [2m]))",
+          "legendFormat": "Upload Confirmed",
+          "queryType": "range",
+          "refId": "C"
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "title": "Registrations vs Verifications",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 25
+      },
+      "description": "A gap between these two lines means email sending is broken (RISK-004).",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "interval": "1m"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"New user registered\" [2m]))",
+          "legendFormat": "New Registrations",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"Email verified\" [2m]))",
+          "legendFormat": "Email Verifications",
+          "queryType": "range",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "title": "Email Success vs Failure",
+      "type": "timeseries",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 25
+      },
+      "description": "Any failures line above zero means email delivery is broken.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "showPoints": "auto",
+            "spanNulls": false
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi"
+        },
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "interval": "1m"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"email_send_success\" [2m]))",
+          "legendFormat": "Emails Sent OK",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"email_send_failure\" [2m]))",
+          "legendFormat": "Email Failures",
+          "queryType": "range",
+          "refId": "B"
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "title": "Alert Panels",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "panels": []
+    },
+    {
+      "id": 18,
+      "title": "Email Send Failures",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 33
+      },
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Email Failures (1h)",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"email_send_failure\" [1h]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "title": "S3 Errors",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 6,
+        "y": 33
+      },
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "S3 Errors (1h)",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"s3_error\" [1h]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "title": "Database Fatal Errors",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 33
+      },
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "DB Fatal Errors (1h)",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-db-1\"} |= \"FATAL\" [1h]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 21,
+      "title": "Login Failure Alert",
+      "type": "stat",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 33
+      },
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Failed Logins (10m)",
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 5
+              },
+              {
+                "color": "red",
+                "value": 15
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_failure\" [10m]))",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 22,
+      "title": "Live Logs",
+      "type": "row",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 38
+      },
+      "panels": []
+    },
+    {
+      "id": 23,
+      "title": "Backend Application Logs",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 14,
+        "x": 0,
+        "y": 39
+      },
+      "options": {
+        "dedupStrategy": "none",
+        "sortOrder": "Descending",
+        "wrapLogMessage": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "{container=\"clouddrive-backend-1\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 24,
+      "title": "Auth and File Events",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 10,
+        "x": 14,
+        "y": 39
+      },
+      "options": {
+        "dedupStrategy": "none",
+        "sortOrder": "Descending",
+        "wrapLogMessage": true,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "{container=\"clouddrive-backend-1\"} |~ \"login|upload|email|s3_error\"",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 25,
+      "title": "Database Container Logs",
+      "type": "logs",
+      "datasource": {
+        "type": "loki",
+        "uid": "P8E80F9AEF21F6940"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 49
+      },
+      "options": {
+        "dedupStrategy": "none",
+        "sortOrder": "Descending",
+        "wrapLogMessage": false,
+        "enableLogDetails": true,
+        "prettifyLogMessage": false,
+        "showCommonLabels": false,
+        "showLabels": false,
+        "showTime": true
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "expr": "{container=\"clouddrive-db-1\"}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
     }
   ],
-  "refresh": "30s",
+  "refresh": "5m",
   "schemaVersion": 38,
-  "tags": [],
-  "templating": { "list": [] },
-  "time": { "from": "now-1h", "to": "now" },
+  "tags": [
+    "clouddrive",
+    "operational"
+  ],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
   "timepicker": {},
   "timezone": "browser",
   "title": "CloudDrive OE Dashboard",
