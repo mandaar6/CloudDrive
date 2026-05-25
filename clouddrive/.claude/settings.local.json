@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(sudo docker:*)",
+      "Read(//var/run/**)",
+      "Bash(docker compose *)",
+      "Bash(python3 -c ' *)"
+    ]
+  }
+}

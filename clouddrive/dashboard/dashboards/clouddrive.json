@@ -18,7 +18,8 @@
         "x": 0,
         "y": 0
       },
-      "panels": []
+      "panels": [],
+      "transparent": true
     },
     {
       "id": 2,
@@ -67,7 +68,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -80,11 +81,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" [1h]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"request_completed\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 3,
@@ -144,11 +146,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "avg_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" | regexp \"duration_ms=(?P<duration>[0-9]+)\" | unwrap duration [2m])",
-          "queryType": "range",
+          "expr": "avg_over_time({container=~\".*backend.*\"} |= \"request_completed\" | regexp \"duration_ms=(?P<duration>[0-9]+)\" | unwrap duration [$__range])",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 4,
@@ -208,11 +211,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "avg_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" |= \"/api/auth/login\" | regexp \"duration_ms=(?P<duration>[0-9]+)\" | unwrap duration [2m])",
-          "queryType": "range",
+          "expr": "avg_over_time({container=~\".*backend.*\"} |= \"request_completed\" |= \"/api/auth/login\" | regexp \"duration_ms=(?P<duration>[0-9]+)\" | unwrap duration [$__range])",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 5,
@@ -253,7 +257,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -266,11 +270,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_success\" [1h]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"login_success\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 6,
@@ -309,13 +314,13 @@
         "overrides": []
       },
       "options": {
-        "graphMode": "none",
+        "graphMode": "area",
         "colorMode": "background",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -328,11 +333,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"ERROR\" [1h]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"ERROR\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 7,
@@ -355,11 +361,16 @@
           },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 60,
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "showPoints": "auto",
-            "spanNulls": false
+            "gradientMode": "opacity",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "showPoints": "never",
+            "spanNulls": true
           }
         },
         "overrides": []
@@ -371,8 +382,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom"
-        },
-        "interval": "1m"
+        }
       },
       "targets": [
         {
@@ -380,32 +390,36 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"request_completed\" [$__interval]))",
           "legendFormat": "Total Requests",
           "queryType": "range",
-          "refId": "A"
+          "refId": "A",
+          "maxDataPoints": 20
         },
         {
           "datasource": {
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" |= \"status=2\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"request_completed\" |= \"status=2\" [$__interval]))",
           "legendFormat": "Successful (2xx)",
           "queryType": "range",
-          "refId": "B"
+          "refId": "B",
+          "maxDataPoints": 20
         },
         {
           "datasource": {
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"request_completed\" |~ \"status=(4|5)\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"request_completed\" |~ \"status=(4|5)\" [$__interval]))",
           "legendFormat": "Errors (4xx/5xx)",
           "queryType": "range",
-          "refId": "C"
+          "refId": "C",
+          "maxDataPoints": 20
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 8,
@@ -418,7 +432,8 @@
         "x": 0,
         "y": 13
       },
-      "panels": []
+      "panels": [],
+      "transparent": true
     },
     {
       "id": 9,
@@ -451,7 +466,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -464,11 +479,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_success\" [1h]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"login_success\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 10,
@@ -517,7 +533,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -530,11 +546,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_failure\" [1h]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"login_failure\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 11,
@@ -567,7 +584,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -580,11 +597,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_success\" [1h]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"upload_success\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 12,
@@ -617,7 +635,7 @@
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -630,11 +648,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_url_requested\" [1h]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"upload_url_requested\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 13,
@@ -657,11 +676,16 @@
           },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 15,
+            "fillOpacity": 60,
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "showPoints": "auto",
-            "spanNulls": false
+            "gradientMode": "opacity",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "showPoints": "never",
+            "spanNulls": true
           }
         },
         "overrides": []
@@ -673,8 +697,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom"
-        },
-        "interval": "1m"
+        }
       },
       "targets": [
         {
@@ -682,22 +705,25 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_success\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"login_success\" [$__interval]))",
           "legendFormat": "Successful Logins",
           "queryType": "range",
-          "refId": "A"
+          "refId": "A",
+          "maxDataPoints": 20
         },
         {
           "datasource": {
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_failure\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"login_failure\" [$__interval]))",
           "legendFormat": "Failed Logins",
           "queryType": "range",
-          "refId": "B"
+          "refId": "B",
+          "maxDataPoints": 20
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 14,
@@ -721,11 +747,16 @@
           },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 60,
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "showPoints": "auto",
-            "spanNulls": false
+            "gradientMode": "opacity",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "showPoints": "never",
+            "spanNulls": true
           }
         },
         "overrides": []
@@ -737,8 +768,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom"
-        },
-        "interval": "1m"
+        }
       },
       "targets": [
         {
@@ -746,32 +776,36 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_url_requested\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"upload_url_requested\" [$__interval]))",
           "legendFormat": "Upload Requested",
           "queryType": "range",
-          "refId": "A"
+          "refId": "A",
+          "maxDataPoints": 20
         },
         {
           "datasource": {
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"confirm_upload_received\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"confirm_upload_received\" [$__interval]))",
           "legendFormat": "Confirm Received",
           "queryType": "range",
-          "refId": "B"
+          "refId": "B",
+          "maxDataPoints": 20
         },
         {
           "datasource": {
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"upload_success\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"upload_success\" [$__interval]))",
           "legendFormat": "Upload Confirmed",
           "queryType": "range",
-          "refId": "C"
+          "refId": "C",
+          "maxDataPoints": 20
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 15,
@@ -795,11 +829,16 @@
           },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 60,
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "showPoints": "auto",
-            "spanNulls": false
+            "gradientMode": "opacity",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "showPoints": "never",
+            "spanNulls": true
           }
         },
         "overrides": []
@@ -811,8 +850,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom"
-        },
-        "interval": "1m"
+        }
       },
       "targets": [
         {
@@ -820,22 +858,25 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"New user registered\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"New user registered\" [$__interval]))",
           "legendFormat": "New Registrations",
           "queryType": "range",
-          "refId": "A"
+          "refId": "A",
+          "maxDataPoints": 20
         },
         {
           "datasource": {
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"Email verified\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"Email verified\" [$__interval]))",
           "legendFormat": "Email Verifications",
           "queryType": "range",
-          "refId": "B"
+          "refId": "B",
+          "maxDataPoints": 20
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 16,
@@ -859,11 +900,16 @@
           },
           "custom": {
             "lineWidth": 2,
-            "fillOpacity": 10,
+            "fillOpacity": 60,
             "drawStyle": "line",
             "lineInterpolation": "linear",
-            "showPoints": "auto",
-            "spanNulls": false
+            "gradientMode": "opacity",
+            "stacking": {
+              "group": "A",
+              "mode": "normal"
+            },
+            "showPoints": "never",
+            "spanNulls": true
           }
         },
         "overrides": []
@@ -875,8 +921,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom"
-        },
-        "interval": "1m"
+        }
       },
       "targets": [
         {
@@ -884,22 +929,25 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"email_send_success\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"email_send_success\" [$__interval]))",
           "legendFormat": "Emails Sent OK",
           "queryType": "range",
-          "refId": "A"
+          "refId": "A",
+          "maxDataPoints": 20
         },
         {
           "datasource": {
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"email_send_failure\" [2m]))",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"email_send_failure\" [$__interval]))",
           "legendFormat": "Email Failures",
           "queryType": "range",
-          "refId": "B"
+          "refId": "B",
+          "maxDataPoints": 20
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 17,
@@ -912,7 +960,8 @@
         "x": 0,
         "y": 32
       },
-      "panels": []
+      "panels": [],
+      "transparent": true
     },
     {
       "id": 18,
@@ -952,12 +1001,12 @@
       },
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -970,11 +1019,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"email_send_failure\" [1h]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"email_send_failure\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 19,
@@ -1014,12 +1064,12 @@
       },
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -1032,11 +1082,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"s3_error\" [1h]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"s3_error\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 20,
@@ -1076,12 +1127,12 @@
       },
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -1094,11 +1145,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-db-1\"} |= \"FATAL\" [1h]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=\"clouddrive-db-1\"} |= \"FATAL\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 21,
@@ -1142,12 +1194,12 @@
       },
       "options": {
         "colorMode": "background",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
-            "lastNotNull"
+            "sum"
           ],
           "fields": "",
           "values": false
@@ -1160,11 +1212,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "sum(count_over_time({container=\"clouddrive-backend-1\"} |= \"login_failure\" [10m]))",
-          "queryType": "range",
+          "expr": "sum(count_over_time({container=~\".*backend.*\"} |= \"login_failure\" [$__range]))",
+          "queryType": "instant",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 22,
@@ -1177,7 +1230,8 @@
         "x": 0,
         "y": 38
       },
-      "panels": []
+      "panels": [],
+      "transparent": true
     },
     {
       "id": 23,
@@ -1209,11 +1263,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "{container=\"clouddrive-backend-1\"}",
+          "expr": "{container=~\".*backend.*\"}",
           "queryType": "range",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 24,
@@ -1245,11 +1300,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "{container=\"clouddrive-backend-1\"} |~ \"login|upload|email|s3_error\"",
+          "expr": "{container=~\".*backend.*\"} |~ \"login|upload|email|s3_error\"",
           "queryType": "range",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     },
     {
       "id": 25,
@@ -1281,11 +1337,12 @@
             "type": "loki",
             "uid": "P8E80F9AEF21F6940"
           },
-          "expr": "{container=\"clouddrive-db-1\"}",
+          "expr": "{container=~\".*db.*\"}",
           "queryType": "range",
           "refId": "A"
         }
-      ]
+      ],
+      "transparent": true
     }
   ],
   "refresh": "5m",
@@ -1298,7 +1355,7 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {},

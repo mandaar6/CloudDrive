@@ -99,6 +99,9 @@ def create_app() -> Flask:
             )
         return response
 
+    @app.route("/health")
+    def health_check():
+        return jsonify({"status": "ok", "service": "backend"}), 200
     with app.app_context():
         # Create tables (used for fresh dev environments; production uses migrations)
         db.create_all()
