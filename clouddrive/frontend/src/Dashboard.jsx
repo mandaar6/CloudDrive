@@ -72,6 +72,7 @@ const S = {
   sidebar: {
     width: 200, background: "#fff", borderRight: "1px solid #e5e7eb",
     padding: "1.25rem 0", flexShrink: 0, overflowY: "auto",
+    display: "flex", flexDirection: "column",
   },
   sideSection: { padding: "4px 16px 8px", fontSize: 11, fontWeight: 600,
                   color: "#9ca3af", textTransform: "uppercase", letterSpacing: 0.5 },
@@ -871,16 +872,35 @@ export default function Dashboard({ activeSection, setActiveSection }) {
       <div style={S.layout}>
         {/* Sidebar */}
         <aside style={S.sidebar}>
-          <p style={S.sideSection}>Navigation</p>
-          {NAV_ITEMS.map(item => (
+          <div>
+            <p style={S.sideSection}>Navigation</p>
+            {NAV_ITEMS.map(item => (
+              <button
+                key={item.key}
+                style={S.navItem(activeSection === item.key)}
+                onClick={() => setActiveSection(item.key)}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ marginTop: "auto", padding: "16px" }}>
             <button
-              key={item.key}
-              style={S.navItem(activeSection === item.key)}
-              onClick={() => setActiveSection(item.key)}
+              style={{ ...S.btn("danger"), width: "100%", padding: "8px" }}
+              onClick={async () => {
+                if (window.confirm("Are you sure you want to permanently delete your account? This will erase all your files and cannot be undone.")) {
+                  try {
+                    await api.delete("/auth/account");
+                    logout();
+                  } catch {
+                    setError("Failed to delete account");
+                  }
+                }
+              }}
             >
-              {item.label}
+              Delete Account
             </button>
-          ))}
+          </div>
         </aside>
 
         {/* Main content */}

@@ -82,6 +82,7 @@ def get_upload_url():
         return jsonify({"error": "File type not allowed"}), 400
 
     user      = request.current_user
+    logger.info("upload_url_requested user=%s filename=%s", user.id, filename)
     file_uuid = uuid.uuid4()
     s3_key    = f"uploads/{user.email}/{file_uuid}/{filename}"
     bucket    = current_app.config["S3_BUCKET_NAME"]
@@ -95,7 +96,7 @@ def get_upload_url():
             ExpiresIn  = 300,
         )
     except ClientError as e:
-        logger.error("Presigned POST generation failed: %s", e)
+        logger.error("s3_error operation=%s error=%s", "generate_presigned_post", type(e).__name__)
         return jsonify({"error": "Could not generate upload URL"}), 500
 
     return jsonify({
@@ -204,7 +205,7 @@ def download(file_id):
     try:
         url = _presigned_get(file_record.s3_key)
     except ClientError as e:
-        logger.error("Presigned URL generation failed: %s", e)
+        logger.error("s3_error operation=%s error=%s", "get_object", type(e).__name__)
         return jsonify({"error": "Could not generate download link"}), 500
 
     logger.info("download_success user=%d file_id=%s", user.id, file_id)
@@ -258,7 +259,7 @@ def reupload(file_id):
             ExtraArgs={"ContentType": f.content_type or "application/octet-stream"},
         )
     except ClientError as e:
-        logger.error("S3 re-upload failed: %s", e)
+        logger.error("s3_error operation=%s error=%s", "upload_fileobj", type(e).__name__)
         return jsonify({"error": "Re-upload to S3 failed"}), 500
 
     file_record.size_bytes   = len(content)
@@ -349,7 +350,7 @@ def permanent_delete(file_id):
             Key=file_record.s3_key,
         )
     except ClientError as e:
-        logger.error("S3 permanent delete failed: %s", e)
+        logger.error("s3_error operation=%s error=%s", "delete_object", type(e).__name__)
 
     db.session.delete(file_record)
     db.session.commit()
@@ -462,7 +463,7 @@ def preview_file(file_id):
             return jsonify({"type": "download", "url": url})
 
     except ClientError as e:
-        logger.error("Preview failed for file %s: %s", file_id, e)
+        logger.error("s3_error operation=%s error=%s", "get_object", type(e).__name__)
         return jsonify({"error": "Could not generate preview"}), 500
 
 

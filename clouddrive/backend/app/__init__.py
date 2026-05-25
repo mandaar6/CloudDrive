@@ -1,5 +1,6 @@
 import jwt
 import logging
+import time
 from datetime import datetime
 
 from flask import Flask, request, jsonify, current_app
@@ -10,6 +11,7 @@ from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
+logger  = logging.getLogger(__name__)
 db      = SQLAlchemy()
 bcrypt  = Bcrypt()
 mail    = Mail()
@@ -76,6 +78,30 @@ def create_app() -> Flask:
         except jwt.InvalidTokenError:
             # Expired or malformed — the individual endpoint's decorator handles it
             pass
+
+    @app.before_request
+    def start_timer():
+        from flask import g
+        g.start_time = time.time()
+
+    @app.after_request
+    def log_response_time(response):
+        from flask import g, request
+        if hasattr(g, "start_time"):
+            duration_ms = int((time.time() - g.start_time) * 1000)
+            logger.info(
+                "request_completed method=%s path=%s "
+                "status=%d duration_ms=%d",
+                request.method,
+                request.path,
+                response.status_code,
+                duration_ms
+            )
+        return response
+
+    @app.route("/health")
+    def health_check():
+        return jsonify({"status": "ok", "service": "backend"}), 200
 
     with app.app_context():
         # Create tables (used for fresh dev environments; production uses migrations)

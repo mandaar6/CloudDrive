@@ -2,6 +2,7 @@ import re
 import uuid
 import jwt
 import logging
+import hashlib
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 
@@ -99,7 +100,8 @@ def register():
     db.session.add(user)
     db.session.commit()
 
-    logger.info("registration user=%s id=%d", email, user.id)
+    email_hash = hashlib.sha256(email.encode()).hexdigest()[:12]
+    logger.info("registration user=%s id=%d", email_hash, user.id)
 
     try:
         msg = Message(
@@ -112,9 +114,9 @@ def register():
             ),
         )
         mail.send(msg)
-        logger.info("Verification email sent to: %s", email)
+        logger.info("email_send_success type=verification")
     except Exception as exc:
-        logger.error("Failed to send verification email to %s: %s", email, exc)
+        logger.error("email_send_failure type=%s error=%s", "verification", type(exc).__name__)
 
     return jsonify({
         "message": "Account created. Please check your email to verify your account."
@@ -142,7 +144,8 @@ def login():
         valid = False
 
     if not valid:
-        logger.warning("login_failure email=%s", email)
+        email_hash = hashlib.sha256(email.encode()).hexdigest()[:12]
+        logger.warning("login_failure email_hash=%s", email_hash)
         return jsonify({"error": "Invalid credentials"}), 401
 
     if not user.is_verified:
@@ -151,7 +154,8 @@ def login():
             "Check your inbox for the verification link."
         )}), 403
 
-    logger.info("login_success user=%s id=%d", email, user.id)
+    email_hash = hashlib.sha256(email.encode()).hexdigest()[:12]
+    logger.info("login_success user=%s id=%d", email_hash, user.id)
 
     token    = _make_token(user.id)
     response = make_response(jsonify({"message": "logged in", "user": user.to_dict()}))
@@ -184,6 +188,52 @@ def logout():
 @login_required
 def me():
     return jsonify({"user": request.current_user.to_dict()})
+
+
+@auth_bp.route("/account", methods=["DELETE"])
+@login_required
+def delete_account():
+    user = request.current_user
+    
+    import boto3
+    from botocore.exceptions import ClientError
+    from .models import File
+    
+    # 1. Delete all user files from S3
+    files = File.query.filter_by(owner_id=user.id).all()
+    if files:
+        cfg = current_app.config
+        s3 = boto3.client(
+            "s3",
+            region_name           = cfg["AWS_REGION"],
+            aws_access_key_id     = cfg["AWS_ACCESS_KEY_ID"],
+            aws_secret_access_key = cfg["AWS_SECRET_ACCESS_KEY"],
+        )
+        for f in files:
+            try:
+                s3.delete_object(Bucket=cfg["S3_BUCKET_NAME"], Key=f.s3_key)
+            except ClientError as e:
+                logger.error("s3_error operation=delete_object_on_account_delete error=%s", type(e).__name__)
+            db.session.delete(f)
+    
+    # 2. Revoke current token
+    payload = request.token_payload
+    jti     = payload.get("jti")
+    if jti:
+        exp_ts     = payload.get("exp")
+        expires_at = datetime.utcfromtimestamp(exp_ts) if exp_ts else None
+        db.session.add(RevokedToken(jti=jti, expires_at=expires_at))
+        
+    # 3. Delete user record
+    db.session.delete(user)
+    db.session.commit()
+    
+    email_hash = hashlib.sha256(user.email.encode()).hexdigest()[:12]
+    logger.info("account_deleted user=%s id=%d", email_hash, user.id)
+    
+    response = make_response(jsonify({"message": "Account permanently deleted"}))
+    response.set_cookie("access_token", "", expires=0, httponly=True, samesite="Lax")
+    return response
 
 
 @auth_bp.route("/verify-email", methods=["GET"])
@@ -231,7 +281,8 @@ def forgot_password():
     db.session.add(reset_token)
     db.session.commit()
 
-    logger.info("Password reset token generated for: %s", email)
+    email_hash = hashlib.sha256(email.encode()).hexdigest()[:12]
+    logger.info("Password reset token generated for user_hash: %s", email_hash)
 
     try:
         msg = Message(
@@ -245,9 +296,9 @@ def forgot_password():
             ),
         )
         mail.send(msg)
-        logger.info("Password reset email sent to: %s", email)
+        logger.info("email_send_success type=password_reset")
     except Exception as exc:
-        logger.error("Failed to send password reset email to %s: %s", email, exc)
+        logger.error("email_send_failure type=%s error=%s", "password_reset", type(exc).__name__)
 
     return jsonify(_success), 200
 

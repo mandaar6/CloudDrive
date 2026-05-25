@@ -101,6 +101,17 @@ export default function Register() {
             onChange={e => setConfirm(e.target.value)}
             required
           />
+          <div style={{ display: "flex", alignItems: "flex-start", marginBottom: 16 }}>
+            <input
+              type="checkbox"
+              id="privacyConsent"
+              required
+              style={{ marginTop: 4, marginRight: 8 }}
+            />
+            <label htmlFor="privacyConsent" style={{ fontSize: 13, lineHeight: 1.4, color: "#4b5563" }}>
+              I agree to the <strong>Privacy Policy</strong> and <strong>Terms of Service</strong>. I consent to the collection and processing of my personal data in accordance with GDPR and CCPA.
+            </label>
+          </div>
           <button style={styles.btn} type="submit" disabled={loading}>
             {loading ? "Creating account…" : "Register"}
           </button>

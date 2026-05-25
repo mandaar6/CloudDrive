@@ -72,6 +72,8 @@ services:
     restart: unless-stopped
     ports:
       - "3100:3100"
+    volumes:
+      - ./custom-loki.yaml:/etc/loki/local-config.yaml:ro
     command: -config.file=/etc/loki/local-config.yaml
     networks:
       - internal
@@ -87,6 +89,7 @@ services:
     restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
       - ./dashboard/promtail-config.yml:/etc/promtail/config.yml:ro
     command: -config.file=/etc/promtail/config.yml
     networks:
@@ -122,9 +125,26 @@ services:
           memory: 512m
           cpus: "0.5"
 
+  # ── Uptime Kuma (Availability Monitoring) ──────────────────────────────────
+  uptime-kuma:
+    image: louislam/uptime-kuma:1.23.1
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime_kuma_data:/app/data
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: "0.2"
+
 volumes:
   postgres_data:
   grafana_data:
+  uptime_kuma_data:
 
 networks:
   internal:
