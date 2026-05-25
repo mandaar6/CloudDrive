@@ -75,6 +75,8 @@ services:
     volumes:
       - ./custom-loki.yaml:/etc/loki/local-config.yaml:ro
     command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./dashboard/loki-config.yml:/etc/loki/local-config.yaml:ro
     networks:
       - internal
     deploy:
